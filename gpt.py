@@ -14,7 +14,7 @@ class GPT:
         self.log = ""
         self.search_index = None
         self.client = OpenAI(
-            api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ["OPENAI_URL"]
+            api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ["OPENAI_API_BASE"]
         )
 
     def load_search_indexes(self, url: str):
@@ -45,9 +45,14 @@ class GPT:
         return self.search_index
 
     def num_tokens_from_messages(self, messages):
-        encoding = tiktoken.encoding_for_model(self.model)
+        try:
+            encoding = tiktoken.encoding_for_model(self.model)
+        except KeyError:
+            encoding = tiktoken.get_encoding("cl100k_base")
+
         tokens_per_message, tokens_per_name = 3, 1
         num_tokens = 0
+
         for msg in messages:
             num_tokens += tokens_per_message
             for k, v in msg.items():

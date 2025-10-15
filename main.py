@@ -9,10 +9,8 @@ from gpt import GPT
 with open("secrets.toml", "rb") as file:
     secrets = tomllib.load(file)
 
-OPENAI_API_KEY = secrets["api"]["OPENAI_API_KEY"]
-OPENAI_URL = secrets["api"]["OPENAI_URL"]
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-os.environ["OPENAI_URL"] = OPENAI_URL
+os.environ["OPENAI_API_KEY"] = secrets["api"]["OPENAI_API_KEY"]
+os.environ["OPENAI_API_BASE"] = secrets["api"]["OPENAI_URL"]
 
 with open("models.toml", "rb") as file:
     models = tomllib.load(file)["models"]
@@ -26,15 +24,15 @@ with gr.Blocks(title="Нейро-сотрудники Unity") as demo:
         value=0,
     )
 
-    name = gr.Label(show_label=False, label=models[0]["name"])
+    name = gr.Label(show_label=False, value=models[0]["name"])
     prompt = gr.Textbox(label="Промт", value=models[0]["prompt"], interactive=True)
     query = gr.Textbox(label="Запрос к LLM", value=models[0]["query"], interactive=True)
     link = gr.HTML(value=f"<a target='_blank' href='{models[0]['doc']}'>Документ для обучения</a>")
 
-    def onchange(dropdown_index):
-        model = models[dropdown_index]
+    def onchange(dropdown):
+        model = models[dropdown]
         return [
-            model["name"],
+            model['name'],
             re.sub(r"\t+|\s\s+", " ", model["prompt"]),
             model["query"],
             f"<a target='_blank' href='{model['doc']}'>Документ для обучения</a>",
@@ -43,8 +41,8 @@ with gr.Blocks(title="Нейро-сотрудники Unity") as demo:
     subject.change(onchange, subject, [name, prompt, query, link])
 
     with gr.Row():
-        train_btn = gr.Button("🔧 Обучить модель")
-        request_btn = gr.Button("💬 Запрос к модели")
+        train_btn = gr.Button("Обучить модель")
+        request_btn = gr.Button("Запрос к модели")
 
     def train(dropdown_index):
         gpt.load_search_indexes(models[dropdown_index]["doc"])
